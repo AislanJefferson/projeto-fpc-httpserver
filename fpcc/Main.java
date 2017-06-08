@@ -19,13 +19,13 @@ public class Main {
 				System.out.println("-----------");
 				Client c = new Client(ip, port);
 				c.run();
-
 				break;
 			case "s":
 				System.out.println("Server mode");
 				port = Integer.parseInt(args[1]);
 				Server s = new Server(port);
 				s.run();
+				break;
 			default:
 				break;
 			}
