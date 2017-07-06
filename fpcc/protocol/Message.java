@@ -1,85 +1,53 @@
 package fpcc.protocol;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
 public class Message {
-	private byte opCode;
-	private int value;
+	private String statusLine;
+	private String headers;
+	private String content;
 
-	// Constantes indicadoras de estados e operacoes
-	// NIL indica que mensagem eh vazia
-	public static final byte NIL = 0;
-	// Codigos de operacao DEC decrementa
-	// INC incrementa
-	public static final byte DEC = 1;
-	public static final byte INC = 2;
 	// Codigos de estado para utilizacao
 	// em lado servidor
-	public static final byte OK = 3;
-	public static final byte ERR = 4;
+	public static final String OK = "200 OK";
+	public static final String NOT_FOUND = "404 NOT FOUND";
+
+	public static final String HTTP1_1 = "HTTP/1.1";
 
 	// Constante para representar o tamanho do pacote
 	public static final int DATA_LENGTH = Integer.BYTES + 1;
 
+	public static final String LINE_SEPARATOR = System.getProperty("line.separator");
+
 	public Message() {
-		opCode = NIL;
-		value = NIL;
+		statusLine = "";
+		headers = "";
+		content = "";
 	}
 
-	public Message(byte[] data) {
-		setFromBytes(data);
-
+	public void setStatus(String status) {
+		statusLine = HTTP1_1 + " " + status;
 	}
 
-	public Message(int op, int value) {
-		this.opCode = (byte) op;
-		this.value = value;
+	public void setContent(String content) {
+		this.content = content;
 	}
 
-	public int getOpCode() {
-		return opCode;
+	public void addHeadersField(String headerLine) {
+		headers += headerLine + LINE_SEPARATOR;
 	}
 
-	public void setOpCode(int op) {
-		this.opCode = (byte) op;
+	public String getHeadersField(String name) {
+		return headers;
 	}
 
-	public int getValue() {
-		return value;
-	}
-
-	public void setValue(int value) {
-		this.value = value;
-	}
-
-	public void setFromBytes(byte[] data) {
-		if (data.length != 5) {
-			throw new RuntimeException("Invalid data!");
-		}
-		opCode = data[0];
-		byte[] valueBytesRepr = Arrays.copyOfRange(data, 1, DATA_LENGTH);
-		value = ByteBuffer.wrap(valueBytesRepr).getInt();
-	}
-
-	public byte[] getBytes() {
-		ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-		outputStream.write(opCode);
-		byte[] valueInBytes = ByteBuffer.allocate(4).putInt(value).array();
-		try {
-			outputStream.write(valueInBytes);
-		} catch (IOException e) {
-			System.err.println(e.getLocalizedMessage());
-		}
-
-		return outputStream.toByteArray();
-
+	@Override
+	public String toString() {
+		//
+		return statusLine + LINE_SEPARATOR + headers + ("Content-Length: " + content.getBytes().length + LINE_SEPARATOR)
+				+ LINE_SEPARATOR + content;
 	}
 
 	public boolean isEmpty() {
-		return opCode == NIL;
+		return headers.isEmpty() && content.isEmpty();
 	}
 
 }

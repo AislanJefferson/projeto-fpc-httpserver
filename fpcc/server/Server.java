@@ -1,8 +1,11 @@
 package fpcc.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
@@ -19,6 +22,7 @@ public class Server implements Runnable {
 		}
 	}
 
+	// TODO: TIRAR ESSE CODIGO DO RUN, um main ja serve
 	@Override
 	public void run() {
 		while (true) {
@@ -28,36 +32,40 @@ public class Server implements Runnable {
 				// Obtem os canais de stream
 				InputStream in = clientSocket.getInputStream();
 				OutputStream out = clientSocket.getOutputStream();
+				PrintWriter pw = new PrintWriter(out);
+				BufferedReader inbuffer = new BufferedReader(new InputStreamReader(in));
 
-				// Realiza o recebimento da mensagem e decodificacao
-				byte[] buffer = new byte[Message.DATA_LENGTH];
-				// Apenas decodifica se tiver lido a qtde de bytes de um pacote
-				// de mensagem no qual é 5 bytes
-				Message msg = new Message();
-				while ((in.read(buffer, 0, Message.DATA_LENGTH)) == Message.DATA_LENGTH) {
-					msg.setFromBytes(buffer);
-					if (!msg.isEmpty()) {
-						int valueToSend = 0;
-						int opToSend;
-						switch (msg.getOpCode()) {
-						case Message.DEC:
-							valueToSend = msg.getValue() - 1;
-							opToSend = Message.OK;
-							break;
-						case Message.INC:
-							valueToSend = msg.getValue() + 1;
-							opToSend = Message.OK;
-							break;
-						default:
-							opToSend = Message.ERR;
-							break;
-						}
-						// TODO: FUNCAO DE LEITURA E ENVIO DE MENSAGEM COMO
-						// sendMessage(Message msg) da classe Client
-						out.write((new Message(opToSend, valueToSend)).getBytes());
+
+				Message responseMessage = new Message();
+
+				boolean headerFinished = false;
+
+				String data;
+				while (inbuffer.ready()) {
+					data = inbuffer.readLine();
+					//
+					System.out.println(data);
+					//
+					if (data.isEmpty()) {
+						headerFinished = true;
+					}
+					// Se tiver lendo o content do request salva no content do response
+					if (headerFinished) {
+						responseMessage.setContent(data);
 					}
 
 				}
+				// configura estado pra ok
+				responseMessage.setStatus(Message.OK);
+				// sendo content vazio entao responde com mensagem padrao
+				if (responseMessage.isEmpty()) {
+					responseMessage.setContent("200 OK");
+				}
+				// Vamos ver como esta o pacote...
+				System.out.println(responseMessage.toString());
+				// envia o pacote montado
+				pw.print(responseMessage.toString());
+				pw.flush();
 
 				System.out.println("Conexao encerrada");
 				clientSocket.close();
