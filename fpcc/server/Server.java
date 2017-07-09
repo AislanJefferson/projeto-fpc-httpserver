@@ -35,15 +35,24 @@ public class Server implements Runnable {
 				PrintWriter pw = new PrintWriter(out);
 				BufferedReader inbuffer = new BufferedReader(new InputStreamReader(in));
 
-
-				Message responseMessage = new Message();
-
 				boolean headerFinished = false;
+				Message responseMessage = new Message();
+				String data = "";
+				String resourcePath = "";
 
-				String data;
-				while (inbuffer.ready()) {
+				byte i = 0;
+				do {
 					data = inbuffer.readLine();
+					if (i == 0) {
+						// Primeiro campo, onde contem o metodo, recurso desejado e protocolo
+						// Quebrar:
+						String[] t = data.split(" ");
+						if (t.length == 3)
+							resourcePath = t[1];
+					}
+
 					//
+					System.out.println(i);
 					System.out.println(data);
 					//
 					if (data.isEmpty()) {
@@ -53,21 +62,23 @@ public class Server implements Runnable {
 					if (headerFinished) {
 						responseMessage.setContent(data);
 					}
+					i++;
+				} while (inbuffer.ready());
 
-				}
 				// configura estado pra ok
 				responseMessage.setStatus(Message.OK);
 				// sendo content vazio entao responde com mensagem padrao
 				if (responseMessage.isEmpty()) {
-					responseMessage.setContent("200 OK");
+					responseMessage.setContent("200 OK - " + resourcePath);
 				}
 				// Vamos ver como esta o pacote...
-				System.out.println(responseMessage.toString());
+				// System.out.println(responseMessage.toString());
 				// envia o pacote montado
 				pw.print(responseMessage.toString());
 				pw.flush();
 
 				System.out.println("Conexao encerrada");
+				inbuffer.close();
 				clientSocket.close();
 			} catch (IOException e) {
 				System.err.println(e.getLocalizedMessage());
