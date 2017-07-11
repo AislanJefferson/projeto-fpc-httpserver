@@ -43,7 +43,7 @@ public class Server implements Runnable {
 				byte i = 0;
 				do {
 					data = inbuffer.readLine();
-					if (i == 0) {
+					if (i == 0 && data != null) {
 						// Primeiro campo, onde contem o metodo, recurso desejado e protocolo
 						// Quebrar:
 						String[] t = data.split(" ");
