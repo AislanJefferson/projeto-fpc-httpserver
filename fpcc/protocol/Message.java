@@ -31,11 +31,15 @@ public class Message {
 		this.content = content;
 	}
 
+	public void appendContent(String content) {
+		this.content += content;
+	}
+
 	public void addHeadersField(String headerLine) {
 		headers += headerLine + LINE_SEPARATOR;
 	}
 
-	public String getHeadersField(String name) {
+	public String getHeadersField() {
 		return headers;
 	}
 

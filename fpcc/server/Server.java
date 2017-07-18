@@ -1,6 +1,9 @@
 package fpcc.server;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -13,6 +16,7 @@ import fpcc.protocol.Message;
 
 public class Server implements Runnable {
 	ServerSocket server_socket;
+	private static final String WEBROOT = "public_html";
 
 	public Server(int port) {
 		try {
@@ -35,6 +39,7 @@ public class Server implements Runnable {
 				PrintWriter pw = new PrintWriter(out);
 				BufferedReader inbuffer = new BufferedReader(new InputStreamReader(in));
 
+				// Seção de leitura do request
 				boolean headerFinished = false;
 				Message responseMessage = new Message();
 				String data = "";
@@ -56,29 +61,40 @@ public class Server implements Runnable {
 					}
 
 					//
-					System.out.println(i);
-					System.out.println(data);
-					//
 					if (data.isEmpty()) {
 						headerFinished = true;
 					}
-					// Se tiver lendo o content do request salva no content do response
-					if (headerFinished) {
-						responseMessage.setContent(data);
-					}
-					i++;
-				} while (inbuffer.ready());
 
-				// configura estado pra ok
-				responseMessage.setStatus(Message.OK);
-				// sendo content vazio entao responde com mensagem padrao
-				if (responseMessage.isEmpty()) {
-					responseMessage.setContent("200 OK - " + resourcePath);
+					System.out.println(i + " - " + data);
+					// Se tiver lendo o content do request salva no content do response
+					// if (headerFinished) {
+					// responseMessage.setContent(data);
+					// }
+					i++;
+				} while (!headerFinished && inbuffer.ready());
+
+				// Seção da leitura do recurso solicitado
+				try {
+					if (resourcePath.equals("/"))
+						resourcePath += "index.html";
+					// ARQUIVOS DEVEM FICAR NA PASTA public_html
+					File f = new File(Server.WEBROOT + resourcePath);
+					FileInputStream reader = new FileInputStream(f);
+					byte[] array = new byte[(int) f.length()];
+					reader.read(array);
+					responseMessage.setContent(new String(array, "UTF-8"));
+					reader.close();
+
+					// configura estado pra ok
+					responseMessage.setStatus(Message.OK);
+
+				} catch (FileNotFoundException e) {
+					responseMessage.setStatus(Message.NOT_FOUND);
 				}
 				// Vamos ver como esta o pacote...
 				// System.out.println(responseMessage.toString());
 				// envia o pacote montado
-				pw.print(responseMessage.toString());
+				pw.print(responseMessage);
 				pw.flush();
 
 				System.out.println("Conexao encerrada");
@@ -88,5 +104,6 @@ public class Server implements Runnable {
 				System.err.println(e.getLocalizedMessage());
 			}
 		}
+
 	}
 }
