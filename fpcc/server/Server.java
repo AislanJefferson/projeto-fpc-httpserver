@@ -16,7 +16,6 @@ import fpcc.protocol.Message;
 
 public class Server implements Runnable {
 	ServerSocket server_socket;
-	private static final String WEBROOT = "public_html";
 
 	public Server(int port) {
 		try {
@@ -57,34 +56,27 @@ public class Server implements Runnable {
 						// Quebrar:
 						String[] t = data.split(" ");
 						if (t.length == 3)
-							resourcePath = t[1];
+							resourcePath = t[1].substring(1);
 					}
 
 					//
 					if (data.isEmpty()) {
 						headerFinished = true;
 					}
-
 					System.out.println(i + " - " + data);
-					// Se tiver lendo o content do request salva no content do response
-					// if (headerFinished) {
-					// responseMessage.setContent(data);
-					// }
 					i++;
 				} while (!headerFinished && inbuffer.ready());
 
 				// Seção da leitura do recurso solicitado
 				try {
-					if (resourcePath.equals("/"))
+					if (resourcePath.isEmpty())
 						resourcePath += "index.html";
-					// ARQUIVOS DEVEM FICAR NA PASTA public_html
-					File f = new File(Server.WEBROOT + resourcePath);
+					File f = new File(resourcePath);
 					FileInputStream reader = new FileInputStream(f);
 					byte[] array = new byte[(int) f.length()];
 					reader.read(array);
 					responseMessage.setContent(new String(array, "UTF-8"));
 					reader.close();
-
 					// configura estado pra ok
 					responseMessage.setStatus(Message.OK);
 
