@@ -9,8 +9,8 @@ case "$1" in
         stop)
             if [ -e ".server.pid" ]; then
 				kill -9 `cat .server.pid`
-			rm .server.pid
-			echo "Servidor encerrado!"
+				rm .server.pid
+				echo "Servidor encerrado!"
 			fi 
             ;;
         *)
