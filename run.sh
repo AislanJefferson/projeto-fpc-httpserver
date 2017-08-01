@@ -14,7 +14,7 @@ case "$1" in
 			fi 
             ;;
         *)
-            echo $"Uso: $0 {start|stop}"
+            echo $"Uso: $0 {start [porta]|stop}"
             exit 1
  
 esac
