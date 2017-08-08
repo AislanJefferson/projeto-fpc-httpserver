@@ -39,34 +39,17 @@ public class Server implements Runnable {
 				BufferedReader inbuffer = new BufferedReader(new InputStreamReader(in));
 
 				// Seção de leitura do request
-				boolean headerFinished = false;
-				Message responseMessage = new Message();
-				String data = "";
 				String resourcePath = "";
 
-				byte i = 0;
-				do {
-					data = inbuffer.readLine();
-					if (data == null) {
-						data = "";
-					}
+				String data = inbuffer.readLine();
+				if (data == null) {
+					data = "";
+				}
+				String[] t = data.split(" ");
+				if (t.length == 3)
+					resourcePath = t[1].substring(1);
 
-					if (i == 0) {
-						// Primeiro campo, onde contem o metodo, recurso desejado e protocolo
-						// Quebrar:
-						String[] t = data.split(" ");
-						if (t.length == 3)
-							resourcePath = t[1].substring(1);
-					}
-
-					//
-					if (data.isEmpty()) {
-						headerFinished = true;
-					}
-					System.out.println(i + " - " + data);
-					i++;
-				} while (!headerFinished && inbuffer.ready());
-
+				Message responseMessage = new Message();
 				// Seção da leitura do recurso solicitado
 				try {
 					if (resourcePath.isEmpty())
@@ -90,6 +73,7 @@ public class Server implements Runnable {
 				pw.flush();
 
 				System.out.println("Conexao encerrada");
+				pw.close();
 				inbuffer.close();
 				clientSocket.close();
 			} catch (IOException e) {
