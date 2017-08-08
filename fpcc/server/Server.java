@@ -25,13 +25,42 @@ public class Server implements Runnable {
 		}
 	}
 
-	// TODO: TIRAR ESSE CODIGO DO RUN, um main ja serve
 	@Override
 	public void run() {
 		while (true) {
 			try {
 				Socket clientSocket = server_socket.accept();
-				System.out.println("Cliente conectado: " + clientSocket.getInetAddress());
+				System.out
+						.println("T" + Thread.activeCount() + " - Cliente conectado: " + clientSocket.getInetAddress());
+
+				while (Thread.activeCount() == Runtime.getRuntime().availableProcessors()) {
+					synchronized (this) {
+						wait();
+						System.out.println("acordei");
+					}
+
+				}
+				System.out.println("Criando thread");
+				new Thread(new SocketProcessing(clientSocket, this)).start();
+			} catch (IOException | InterruptedException e) {
+				System.err.println(e.getLocalizedMessage());
+			}
+		}
+
+	}
+
+	public class SocketProcessing implements Runnable {
+		private Socket clientSocket;
+		private Server parent;
+
+		public SocketProcessing(Socket clientSocket, Server parent) {
+			this.clientSocket = clientSocket;
+			this.parent = parent;
+		}
+
+		@Override
+		public void run() {
+			try {
 				// Obtem os canais de stream
 				InputStream in = clientSocket.getInputStream();
 				OutputStream out = clientSocket.getOutputStream();
@@ -54,6 +83,7 @@ public class Server implements Runnable {
 				try {
 					if (resourcePath.isEmpty())
 						resourcePath += "index.html";
+					System.out.println("Arquivo aberto");
 					File f = new File(resourcePath);
 					FileInputStream reader = new FileInputStream(f);
 					byte[] array = new byte[(int) f.length()];
@@ -66,20 +96,22 @@ public class Server implements Runnable {
 				} catch (FileNotFoundException e) {
 					responseMessage.setStatus(Message.NOT_FOUND);
 				}
-				// Vamos ver como esta o pacote...
-				// System.out.println(responseMessage.toString());
-				// envia o pacote montado
+
 				pw.print(responseMessage);
 				pw.flush();
 
-				System.out.println("Conexao encerrada");
 				pw.close();
 				inbuffer.close();
 				clientSocket.close();
+				System.out.println("Conexao encerrada");
+				synchronized (parent) {
+					parent.notify();
+				}
 			} catch (IOException e) {
 				System.err.println(e.getLocalizedMessage());
 			}
-		}
 
+		}
 	}
+
 }
